@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: locust2
+  labels:
+    app: locust2
+spec:
+  ports:
+    - port: 8089
+  selector:
+    app: locust2
+  type: NodePort
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: locust2
+  labels:
+    app: locust2
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: locust2
+        tier: frontend
+    spec:
+       containers:
+       - image: cybernijntje/locust-test:1.0
+         name: locust2
+         env:
+         - name: LOCUST_MODE
+           value: standalone
+         - name: TARGET_URL
+           value: http://myapp
+         ports:
+         - containerPort: 8089
+           name: locust2
