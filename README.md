@@ -26,4 +26,4 @@
       https://www.virtualbox.org/wiki/Downloads 
 
 
-# All steps explained in TUTORIAL.md file
+# All steps explained in TUTORIAL.txt file
