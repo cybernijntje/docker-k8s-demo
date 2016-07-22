@@ -1,0 +1,121 @@
+1. <DOCKER> Create custom (bridged) ’my-net’ network
+# docker network create my-net
+# docker network ls
+ 
+2. <DOCKER> Create and run new “mysql-server“ container and add DB content
+# docker run --net my-net --name mysql-server -e MYSQL_ROOT_PASSWORD=password -d mysql:5.7
+# docker run -ti --net my-net --rm mysql:5.7 sh -c 'exec mysql -hmysql-server -P3306 -uroot -ppassword'
+mysql> CREATE DATABASE myapp;
+mysql> USE myapp;
+mysql> CREATE TABLE location(
+             id INT NOT NULL AUTO_INCREMENT,
+             city VARCHAR(10) NOT NULL,
+             PRIMARY KEY ( id ));
+mysql> INSERT INTO location (city) VALUES ("Karlsruhe");
+mysql> INSERT INTO location (city) VALUES ("Amsterdam");
+mysql> exit
+
+3. <DOCKER> Create and run new “myapp“ container
+# docker run -d --name myapp --net my-net -p 80:80 cybernijntje/myapp:1.0 
+
+4. <DOCKER> Create and run two new “locust“ containers
+# docker run -d --name locust1 --net my-net -p 8089:8089 -e LOCUST_MODE=standalone -e TARGET_URL=http://myapp cybernijntje/locust-test:1.0
+# docker run -d --name locust2 --net my-net -p 8090:8089 -e LOCUST_MODE=standalone -e TARGET_URL=http://myapp cybernijntje/locust-test:1.0
+
+“myapp“ should be reachable via:	http://localhost
+“locust1“ should be reachable via:	http://localhost:8089
+“locust2“ should be reachable via:	http://localhost:8090
+
+5. <DOCKER> Execute locust lasttests
+Run both locust servers in parallel with the following settings:
+- Nr. Users to simulate	1000
+- Hatch rate		   1 
+
+First fails should be visible in either locust GUI around 160 concurrent users
+
+----------
+
+1. <K8S> Start up a new Kubernetes cluster
+# minikube start
+
+2. <K8S> Create and run new “mysql-server“ deployment and add DB content
+# cd ~/myapp/kubernetes
+# kubectl create -f mysql-deployment.yaml
+# kubectl get pods
+# kubectl exec -ti <myapp-mysql_POD_NAME> /bin/bash 
+# mysql -ppassword
+mysql> CREATE DATABASE myapp;
+mysql> USE myapp;
+mysql> CREATE TABLE location(
+             id INT NOT NULL AUTO_INCREMENT,
+             city VARCHAR(10) NOT NULL,
+             PRIMARY KEY ( id ));
+mysql> INSERT INTO location (city) VALUES ("Karlsruhe");
+mysql> INSERT INTO location (city) VALUES ("Amsterdam");
+mysql> exit
+# exit
+
+3. <K8S> Create and run new “myapp“ deployment
+# kubectl create -f myapp-deployment.yaml 
+
+4. <K8S> Create and run two new “locust“ deployments
+# kubectl create -f locust1-deployment.yaml
+# kubectl create -f locust2-deployment.yaml
+
+5. <K8S> Check IP address of Kubernetes cluster and port numbers of the “myapp“, “locust1“ and “locust2“ pods
+# minikube ip
+# kubectl get services myapp -o yaml | grep -i nodeport
+# kubectl get services locust1 -o yaml | grep -i nodeport
+# kubectl get services locust2 -o yaml | grep -i nodeport
+
+“myapp“ should be reachable via:	http://<minikube_IP>/<myapp_NodePort_nr>
+“locust1“ should be reachable via:	http://<minikube_IP>/<locust1_NodePort_nr>
+“locust2“ should be reachable via:	http://<minikube_IP>/<locust2_NodePort_nr>
+
+6. <K8S> Execute locust lasttests
+Run both locust servers in parallel with the following settings:
+- Nr. Users to simulate	1000
+- Hatch rate	           1 
+
+First fails should be visible in either locust GUI around 140 concurrent users
+
+----------
+
+1. <K8S> Modify the amount of replicas in file 
+# vi myapp-deployment.yaml
+...
+ replicas: 3
+...
+
+# kubectl apply -f myapp-deployment.yaml
+# kubectl get pods
+
+2. <K8S> Execute locust lasttests
+Run both locust servers in parallel with the following settings:
+- Nr. Users to simulate	1000
+- Hatch rate   	           1 
+
+First fails should be visible in either locust GUI around 260 concurrent users
+
+----------
+
+1. <K8S> Get AGE information of running “myapp“ pods
+# kubectl get pods
+
+2. <K8S> Execute locust lasttests
+Run both locust servers in parallel with the following settings:
+- Nr. Users to simulate	1000
+- Hatch rate		   1 
+
+3. <K8S> Update myapp:1.0 to myapp:1.1 (with running locust lasttests)
+# vi myapp-deployment.yaml
+...
+ - image: cybernijntje/myapp:1.1
+...
+
+# kubectl apply -f myapp-deployment.yaml
+# kubectl describe deployments myapp
+# kubectl get pods
+# kubectl describe pod <myapp_POD_NAME> | grep Image 
+
+4. <K8S> Check locust lasttests output
