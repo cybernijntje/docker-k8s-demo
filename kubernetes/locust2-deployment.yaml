@@ -27,13 +27,13 @@ spec:
         tier: frontend
     spec:
        containers:
-       - image: cybernijntje/locust-test:1.0
-         name: locust2
-         env:
-         - name: LOCUST_MODE
-           value: standalone
-         - name: TARGET_URL
-           value: http://myapp
-         ports:
-         - containerPort: 8089
+         - image: cybernijntje/locust-test:1.0
            name: locust2
+           env:
+             - name: LOCUST_MODE
+               value: standalone
+             - name: TARGET_URL
+               value: http://myapp
+           ports:
+             - containerPort: 8089
+               name: locust2
