@@ -21,7 +21,7 @@ metadata:
 spec:
   replicas: 1
   strategy:
-    type: Recreate
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -29,13 +29,13 @@ spec:
         tier: frontend
     spec:
       containers:
-      - image: cybernijntje/myapp:1.0
-        name: myapp
-        env:
-        - name: MYAPP_DB_HOST
-          value: myapp-mysql
-        - name: MYAPP_DB_PASSWORD
-          value: password
-        ports:
-        - containerPort: 80
+        - image: cybernijntje/myapp:1.0
           name: myapp
+          env:
+            - name: MYAPP_DB_HOST
+              value: myapp-mysql
+            - name: MYAPP_DB_PASSWORD
+              value: password
+          ports:
+            - containerPort: 80
+              name: myapp
