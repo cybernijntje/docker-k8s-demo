@@ -11,7 +11,7 @@ mysql = MySQL(app)
 @app.route('/')
 def index():
     cur = mysql.connection.cursor()
-    cur.execute('''SELECT * FROM location WHERE id = 2''')
+    cur.execute('''SELECT * FROM location WHERE id = 1''')
     rv = cur.fetchall()
     return str(rv)
 
